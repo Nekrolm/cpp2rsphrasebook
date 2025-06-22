@@ -1,6 +1,6 @@
 # Syntax
 
-<table border="1" cellspacing="0" cellpadding="8">
+<table>
 <tr>
     <th></th>
     <th>C++</th>
