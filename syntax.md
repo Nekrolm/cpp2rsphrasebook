@@ -22,17 +22,17 @@ constexpr inline auto fun = []<class T>(T t) -> T {
 
 ```rust
 fn fun<T>(t: T) -> T {
-    t; // `return` keyword is optional
+    t // `return` keyword is optional
 }
 ```
    </td>
   </tr>
   <tr>
     <td>
-    You may call me insane, but this is the closes equivalent of Rust's functions in C++20!
+    You may call me insane, but this is the closest equivalent of Rust's functions in C++20!
     </td>
     <td>
-    Each function is Rust has it's own, unique type -- like lambda funcions in C++. It provides several benefits for inlining and compiler optimizations, but has implications on the compulation time and binary size
+    Each function is Rust has it's own, unique type -- like lambda funcions in C++. It provides several benefits for inlining and compiler optimizations, but has implications on the compilation time and binary size
     </td>
   </tr>
 

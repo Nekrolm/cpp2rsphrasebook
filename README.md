@@ -42,3 +42,4 @@ fn main() {
 
 # Table of Contents
 - [Syntax](syntax.md)
+- [Pointers and references](pointers.md)
