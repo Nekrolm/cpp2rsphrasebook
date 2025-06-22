@@ -72,11 +72,11 @@ static STATIC_CONST_VAL: i32 = 42;
   </tr>
   <tr>
     <td>
-    Variables in C++ are mutable by default and we need `const` to make them immutable.
+    Variables in C++ are mutable by default and we need <code>const</code> to make them immutable.
     </td>
     <td>
-    In Rust the defaults are reversed -- variables are immutable by default, use `mut` to make them mutable.
-   For `const` and `static` variables, Rust requires explicit type annotations. Also Rust linters, by default, want to see `SCREAMING_SNAKE_CASE` for `const` and `static` variables -- because they are usually require extra attention. Especially static variables
+    In Rust the defaults are reversed -- variables are immutable by default, use <code>mut</code> to make them mutable.
+   For `const` and `static` variables, Rust requires explicit type annotations. Also Rust linters, by default, want to see <code>SCREAMING_SNAKE_CASE</code> for them -- because they are usually require extra attention. Especially static variables
     </td>
   </tr>
 
