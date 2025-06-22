@@ -76,8 +76,45 @@ static STATIC_CONST_VAL: i32 = 42;
     </td>
     <td>
     In Rust the defaults are reversed -- variables are immutable by default, use <code>mut</code> to make them mutable.
-   For `const` and `static` variables, Rust requires explicit type annotations. Also Rust linters, by default, want to see <code>SCREAMING_SNAKE_CASE</code> for them -- because they are usually require extra attention. Especially static variables
+   For <code>const</code> and <code>static</code> variables, Rust requires explicit type annotations. Also Rust linters, by default, want to see <code>SCREAMING_SNAKE_CASE</code> for them -- because they are usually require extra attention. Especially static variables. 
     </td>
   </tr>
+
+
+
+
+  <tr>
+    <td rowspan="2">Constexpr functions</td>
+    <td>
+
+```cpp
+constexpr int add(int a, int b) {
+    return a + b;
+}
+constexpr const int result = add(1,2); 
+```   
+
+   </td>
+    <td>
+
+```rust
+const fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+const RESULT: i32 = add(1, 2);
+```
+   </td>
+  </tr>
+  <tr>
+    <td>
+    C++ constexpr is extremely powerfull, with C++23 almost anything can be done at the compilation time.
+    <br>
+    Note that in form of the lambda functions, as shown above, <code>constexpr</code> specifier is already included for implicitly declared <code>operator()</code>
+    </td>
+    <td>
+    Constants and statics in Rust can be initiailed only with constant expressions, e.g. functions that are makred with <code>const</code>. const functions are similat to C++ constexpr functions, but they are much more limited. E.g. there are no compile-time allocations, `for` loops are not supported in const context. See <a href="https://doc.rust-lang.org/reference/const_eval.html">Rust reference</a> for more details.
+    </td>
+  </tr>
+
 
 </table>
