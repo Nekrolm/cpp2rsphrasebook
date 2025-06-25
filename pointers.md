@@ -530,4 +530,47 @@ References to slices are fat pointers: they carry length of the slice along with
 
 
 
+<tr>
+    <td rowspan="2"> References to string slices </td>
+    <td>
+
+```cpp
+
+#include <string_view>
+
+std::u8string_view s1 = u8"Hello World";
+// but almost always it's just
+std::string_view s2 = "Hello World";
+
+```
+
+   </td>
+
+   <td>
+
+```rust
+  let s1 : &str = "Hello World;
+```
+   </td>
+</tr>
+
+
+<tr>
+
+<td>
+In C++, to handle references to utf-8 strings, standard library provides <code>std::u8string_view</code>
+But there are too many legacy code lines, and almost everyone uses just <code>std::string_view</code>
+which can contain arbitray sequences.
+</td>
+
+<td>
+
+Rust's <code>&str</code> must point to utf-8 encoded string. Similarly to slices, such references are pairs: pointer to the start of the string, and the length in bytes.
+
+</td>
+
+</tr>
+
+
+
 </table>
