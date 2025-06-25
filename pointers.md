@@ -199,6 +199,7 @@ if let Some(r) = opt_ref {
     <td>
     Rust <code>Option</code> can be used to create nullable references. Unlike C++ version, Rust's Option cannot be directly dereferenced without explicit check. It also has </code>Option::is_some()</code> and <code>Option::is_none()</code> methods to check for the current state of the option. And, if you are sure that the option is not null, you can use <code>Option::unwrap()</code>. But this is not recommended, as it can lead to runtime panics if the option is actually null. Pefer pattern matching or optional methods like <code>Option::map()</code> or <code>Option::and_then()</code>
     <br>
+    <br>
     Take into account that Rust's <code>Option</code> is a generic type, so it can be used with any type, not just references. And it has built-in support for niche optimization. So, if there are holes -- invalid representations -- for the type (like 0 value for references), Rust compiler will automatically try to use this hole to represent the <code>None</code> state, saving some memory on the size of <code>Option<T></code>.
    </td>
 </tr>
@@ -276,7 +277,7 @@ assert(uptr.valueless_after_move()); // uptr is now moved-out
 *uptr2 = 43; // dereference and mutate
 
 
-const std::unique_ptr<int> uptr3 {42};
+const std::indirect<int> uptr3 {42};
 *uptr3 = 43; // compilation error! const is propagated to the pointee!
 ```
    </td>
@@ -312,6 +313,220 @@ Unlike unique_ptr, <code>std::indirect</code> cannot be parametrized by custom d
 
 </tr>
 
+<tr>
+    <td rowspan="2"> Shared Pointers: Weak and Strong </td>
+    <td>
+
+```cpp
+
+#include <memory>
+
+std::shared_ptr<int> sptr = std::make_shared<int>(42);
+std::shared_ptr<int> sptr2 = sptr; // copiable
+std::shared_ptr<int> sptr3 = std::move(sptr); 
+assert(sptr == nullptr); // nullable
+
+*sptr2 = 43; // dereference and mutate
+
+
+const std::shared_ptr<int> sptr3 = std::make_shared<int>(42);
+*sptr3 = 43; // fine, const is not propagated to the pointee
+
+// weak pointer, not associated with any shared pointer
+std::weak_ptr<int> wptr {};
+
+// weak pointer, associated to shared pointer
+std::weak_ptr<int> wptr2 = sptr; 
+
+// upgrade weak pointer to strong one
+// may return null!
+std::shared_ptr<int> sptr4 = wptr2.lock();
+
+```
+   </td>
+    <td>
+
+```rust
+use std::sync::Arc; // Atomic Ref Counter
+use std::sync::Weak;
+
+let mut sptr = Some(Arc::new(42)); // Option<Arc<i32>>
+let mut sptr2 = sptr.clone() // can be copied, explicitly
+// Similar to Box, Arc is non nullable
+
+// compilation error! Arc is a shared reference 
+// cannot mutate over it!
+*sptr2 = 43;
+
+// Will make a copy, if there are more than 1 strong reference,
+// or if there are weak references
+*Arc::make_mut(&mut sptr) = 43;
+
+// Returns None, if there are other strong references
+// or weak references
+if let Some(p) = Arc::get_mut(&mut sptr) {
+    *p = 43;
+}
+
+// weak pointer, not associated with any shared pointer
+let wptr = Weak::new();
+// explicitly downgrade Arc to obtain weak version
+let wptr2 = Arc::downgrade(&sptr2);
+// upgrade weak pointer to strong version
+// nullabitily encoded in type!
+let sptr4: Option<Arc<_>> = wptr.upgrade();
+
+```
+
+   </td>
+</tr>
+
+<tr>
+<td>
+
+<code>std::shared_ptr</code> uses atomic reference counter for
+to track references to the managed object. No other thread-safety
+guarantees. You can mutate object via shared pointer (and cause data race if you don't have proper synchronization)
+<br>
+C++'s shared pointer, similarly to unique pointer, supports custom deleters
+
+</td>
+
+<td>
+<code>Arc</code>, aka atomic ref counter, is similar to <code>shared_ptr</code>, but you cannot directly mutate the object behind it, if there are other pointer to the same object.
+
+<code>Arc</code> similarly to <code>Box</code> is nonnullable. Wrap it with <code>Option</code> if needed
+</td>
+
+</tr>
+
+</tr>
+ <td> Shared Pointers: Non Atomic </td>
+ <td> 
+    N/A
+ </td>
+ <td>
+
+ ```rust
+   use std::rc::Rc;
+   use std::rc::Weak;
+
+   // Same as Arc, but without atomics. Cannot be shared or moved between mutliple threads
+ ```
+ </td>
+
+
+
+
+<tr>
+    <td rowspan="2">Copy on Write pointer</td>
+    <td>
+
+```cpp
+#include <variant>
+#include <functional>
+#include <type_traits>
+
+template <typename T>
+requires std::copy_constructible_v<T>
+struct CopyOnWrite : std::variant<T, std::reference_wrapper<const T>> {
+
+    operator const T& () const {
+        // returns reference, stored or to stored object
+        ...
+    }
+
+    T& to_mut() {
+        // if stores reference, copies the value inside
+        // returns reference to the stored value
+        ...
+    }
+};
+
+
+```
+
+   </td>
+
+   <td>
+
+```rust
+   use std::borrow::Cow; // Clone on Write
+
+   let value = String::from("Hello World");
+   let mut ptr = Cow::Borrowed(&value); // takes reference
+   ptr.to_mut().push("Rust");
+   // on attempt to mutate the value, makes the copy 
+   assert!(matches!(ptr, Cow::Owned(_)));
+```
+   </td>
+</tr>
+
+
+<tr>
+<td>
+C++ standard library doesn't have such smart pointer, but
+it can be manually crafted on top of <code>std::variant</code>
+Copy-on-write propery in C++ usually implemented inside 
+concrete types (like <code>std::string</code> in pre C++11 standard library implemetations)
+
+</td>
+
+<td>
+
+In Rust, It's a common practice to attach Copy-On-Write property via smart pointer-wrapper. Arc & Rc as it was shown above, also have Copy-On-Write support.
+Keep in mind that <code>Cow</code> carries lifetime parameter to ensure validness of the reference
+
+</td>
+
+</tr>
+
+
+<tr>
+    <td rowspan="2"> References to arrays -- contigious ranges & spans</td>
+    <td>
+
+```cpp
+
+#include <span>
+
+uint8_t bytes[] = {1, 2, 3, 4, 5};
+auto bytes_mut = std::span<uint8_t>(bytes, 5);
+auto bytes_const = std::spawn<const uint8_t>(bytes, 5);
+
+static_assert(sizeof(bytes_mut) == 2 * sizeof(uint8_t*));
+
+```
+
+   </td>
+
+   <td>
+
+```rust
+  let bytes = [1,2,3,4,5];
+  let bytes_mut : &mut [u8] = &mut bytes[..];
+  let bytes_const : &[u8] = & bytes[..];
+  
+  std::mem::size_of::<&[u8]>() == 2 * std::mem::size_of::<*const u8>();
+```
+   </td>
+</tr>
+
+
+<tr>
+
+<td>
+</td>
+
+<td>
+
+References to slices are fat pointers: they carry length of the slice along with the pointer to its start.
+
+<code>std::span<T></code> in C++ and <code>&mut [T]</code> in Rust are identical, except Rust's lifetime & borrowing rules  
+
+</td>
+
+</tr>
 
 
 
