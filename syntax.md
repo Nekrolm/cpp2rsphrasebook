@@ -116,5 +116,228 @@ const RESULT: i32 = add(1, 2);
     </td>
   </tr>
 
+ <tr>
+   <td>Struct definition</td>
+
+   <td>
+
+
+```cpp
+
+struct Pair {
+    int32_t x;
+    int32_t y;
+};
+
+// C++20
+auto p = Pair {.x = 5, .y = 10};
+
+```
+
+   </td>
+
+   <td>
+   
+   ```rust
+   struct Pair {
+     x: i32,
+     y: i32,
+   }
+   
+   let p = Pair { x : 5, y : 10};
+
+
+   // use pub visibility modifier
+   // if the struct fields are intended to be accessible outside of the 
+   // module that defines a structure
+
+   pub struct Point {
+     pub x : i32,
+     pub y : i32
+   }
+   ```
+
+   </td>
+ </tr>
+
+ <tr>
+ <td>Enum definition (trivial) </td>
+
+  <td>
+  
+  ```cpp
+  
+  enum class MyEnum : uint32_t {
+     Value1 = 1,
+     Value2 = 2,
+     Value3
+  };
+  
+  ```
+  
+  </td>
+
+  <td>
+
+  ```rust
+  #[repr(u32)]
+  enum MyEnum {
+    Value1 = 1,
+    Value2 = 2,
+    Value3
+  } 
+  ```
+
+ </td>
+
+ </tr>
+
+
+
+  <tr>
+ <td>Enum definition (tagged union) </td>
+
+  <td>
+  
+  ```cpp
+  
+#include <variant>
+struct Leaf { 
+  int32_t value; 
+};
+struct Tree: 
+  std::variant<
+      Leaf, 
+      std::vector<Tree>
+  > {};
+  
+  ```
+  
+  </td>
+
+  <td>
+
+```rust
+
+enum Tree {
+  Leaf { value : i32 },
+  Node(Vec<Tree>)
+}
+
+  ```
+
+ </td>
+
+ </tr>
+
+
+
+<tr>
+ <td rowspan="2"> Switch / Match over trivial enum </td>
+
+  <td>
+  
+  ```cpp
+  MyEnum e = ...;
+
+  auto value = [e]{
+    // C++20 !
+    using enum MyEnum;
+    switch (e) {
+        case Value1: return 25;
+        case Value2: return 10;
+        case Value3: return 0;
+        default: return 45;
+    };
+  }();
+
+  
+  ```
+  
+  </td>
+
+  <td>
+
+  ```rust
+  let e : MyEnum = ...;
+  use MyEnum::*;
+  let value = match e {
+     Value1 => 25,
+     Value2 => 10,
+     Value3 => 0,
+     _ => 45,
+  };
+  ```
+
+ </td>
+</tr>
+
+<tr>
+<td>
+Rust is expression-oriented language. That's why I decided to show C++'s switch inside
+the immediately invoked lambda -- this is the closes counterpart
+</td>
+
+<td>
+Of course, usage of <code>use MyEnum</code> or <code>using enum MyEnum</code> is not mandatary. I demonstrate it just because such option exists and it's useful
+</td>
+
+ </tr>
+
+
+<tr>
+
+<td rowspan="2"> Switch / Match over tagged union </td>
+
+<td>
+
+```cpp
+#include <variant>
+
+// C++20
+// helper type for the visitor
+template<class... Ts>
+struct matcher : Ts... { using Ts::operator()...; };
+
+
+Tree t = ...;
+
+size_t estimate(const Tree& t) {
+    t.visit(
+        matcher {
+            [](const Leaf& l) -> size_t { return l.value; },
+            [](const std::vector<Tree>& n) -> { return n.size(); }
+        }
+    );
+}
+
+```
+
+</td>
+
+<td>
+
+```rust
+
+fn estimate(t: &Tree) -> usize {
+    match t {
+        Leaf { value } => value as usize,
+        Node(next) => next.len() * 5
+    }
+}
+
+```
+
+</td>
+
+</tr>
+<tr>
+
+<td> That's beatiful and painful. <code>std::variant</code> is not a core language construct but custom type with methods </td>
+<td> Tagged enums are language feature in Rust. </td>
+
+</tr>
+
+
 
 </table>
